@@ -1,76 +1,39 @@
-## reagent-app-demo
+# reagent-app-demo
 
-### Usage
+## Installation
 
-#### Install Expo [XDE and mobile client](https://docs.expo.io/versions/v15.0.0/introduction/installation.html)
-    If you don't want to use XDE (not IDE, it stands for Expo Development Tools), you can use [exp CLI](https://docs.expo.io/versions/v15.0.0/guides/exp-cli.html).
+Ensure you have [lein](http://leiningen.org/#install) installed.
 
-``` shell
-    yarn global add exp
-```
-
-#### Install [Lein](http://leiningen.org/#install) or [Boot](https://github.com/boot-clj/boot)
-
-#### Install npm modules
+Install Expo [XDE and mobile client](https://docs.expo.io/versions/v15.0.0/introduction/installation.html)
 
 ``` shell
-    yarn install
+npm -g install expo
 ```
-
-#### Signup using exp CLI
 
 ``` shell
-    exp signup
+npm install
 ```
 
-#### Start the figwheel server and cljs repl
+## Usage
 
-##### leiningen users
-``` shell
-    lein figwheel
+Start Exponent in one terminal session
+
+```shell
+expo start
 ```
 
-##### boot users
-``` shell
-    boot dev
+and start the iOS simulator by pressing `i`.
 
-    ;; then input (cljs-repl) in the connected clojure repl to connect to boot cljs repl
-```
+### Standalone REPL
 
-#### Start Exponent server (Using `exp`)
-
-##### Also connect to Android device
+Start figwheel in another terminal session
 
 ``` shell
-    exp start -a --lan
+lein figwheel
 ```
 
-##### Also connect to iOS Simulator
+or
 
-``` shell
-    exp start -i --lan
-```
+### Cursive REPL
 
-### Add new assets or external modules
-1. `require` module:
-
-``` clj
-    (def cljs-logo (js/require "./assets/images/cljs.png"))
-    (def FontAwesome (js/require "@expo/vector-icons/FontAwesome"))
-```
-2. Reload simulator or device
-
-### Make sure you disable live reload from the Developer Menu, also turn off Hot Module Reload.
-Since Figwheel already does those.
-
-### Production build (generates js/externs.js and main.js)
-
-#### leiningen users
-``` shell
-lein prod-build
-```
-
-#### boot users
-``` shell
-boot prod
-```
+Open the project in Cursive and follow [this guide](https://docs.expo.io/versions/latest/guides/using-clojurescript/#cursive-repl).
