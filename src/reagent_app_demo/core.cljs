@@ -1,5 +1,9 @@
 (ns reagent-app-demo.core
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [cljs.spec.alpha :as s]
+            [orchestra-cljs.spec.test :as st]
+            [clojure.test.check.generators]
+            [cljs.spec.gen.alpha :as gen]))
 
 ;;
 ;; imports
@@ -18,35 +22,73 @@
 ;; db
 ;;
 
+(s/def :patient/id keyword?)
+(s/def :patient/selected? boolean?)
+(s/def :patient/dose-history (s/every (s/int-in 0 100)
+                                      :min-count 4
+                                      :max-count 4))
+(s/def :patient/color
+  (s/with-gen
+    (s/and string? #(re-matches #"rgb\(\d+,\d+,\d+\)" %))
+    #(gen/fmap (fn [[r g b]] (str "rgb(" r "," g "," b ")"))
+               (s/gen (s/tuple (s/int-in 0 255) (s/int-in 0 255) (s/int-in 0 255))))))
+
+(s/def ::patient (s/keys :req [:patient/id
+                               :patient/color
+                               :patient/selected?
+                               :patient/dose-history]))
+
+(s/def :db/patients (s/every ::patient))
+
+(s/def ::app-db (s/keys :req [:db/patients]))
+
 (defonce app-db
   (r/atom
-    {:date-range ["2019-06-01" "2019-06-02" "2019-06-03" "2019-06-04"]
-     :patients   {:patient-1 {:id           :patient-1
-                              :dose-history [(rand-int 100) (rand-int 100) (rand-int 100) (rand-int 100)]
-                              :color        "rgb(255, 0, 0)"
-                              :selected?    true}
-                  :patient-2 {:id           :patient-2
-                              :dose-history [92 93 95 95]
-                              :color        "rgb(0, 0, 255)"
-                              :selected?    true}}}))
+    #:db {:date-range ["2019-06-01" "2019-06-02" "2019-06-03" "2019-06-04"]
+          :patients   [#:patient {:id           :patient-1
+                                  :dose-history [(rand-int 100) (rand-int 100) (rand-int 100) (rand-int 100)]
+                                  :color        "rgb(255,0,0)"
+                                  :selected?    true}
+                       #:patient {:id           :patient-2
+                                  :dose-history [92 93 95 95]
+                                  :color        "rgb(0,0,255)"
+                                  :selected?    true}]}))
 
 ;;
 ;; db fns
 ;;
 
 (defn get-date-range [db]
-  (:date-range db))
+  (:db/date-range db))
 
 (defn get-patients [db]
-  (vals (:patients db)))
+  (:db/patients db))
+
+(s/fdef get-patients
+        :args (s/cat :db ::app-db)
+        :ret (s/every ::patient))
 
 (defn get-selected-patients [db]
   (->> db
        (get-patients)
-       (filter :selected?)))
+       (filter :patient/selected?)))
+
+(s/fdef get-selected-patients
+        :args (s/cat :db ::app-db)
+        :ret (s/every ::patient))
 
 (defn toggle-select-patient [patient-id]
-  (swap! app-db update-in [:patients patient-id :selected?] not))
+  (swap! app-db update :db/patients
+         (fn [patients]
+           (mapv (fn [{:patient/keys [id] :as patient}]
+                   (if (= id patient-id)
+                     (update patient :patient/selected? not)
+                     patient))
+                 patients))))
+
+(s/fdef toggle-select-patient
+        :args (s/cat :patient-id :patient/id)
+        :ret ::app-db)
 
 ;;
 ;; components
@@ -67,7 +109,7 @@
                   :font-size   14}}
     (if selected? "X" "")]])
 
-(defn patient-selector [{:keys [id color selected?]}]
+(defn patient-selector [{:patient/keys [id color selected?]}]
   [touchable-opacity {:on-press #(toggle-select-patient id)
                       :style    {:display        :flex
                                  :flex-direction :row
@@ -88,14 +130,14 @@
      [view {:style {:display        :flex
                     :flex-direction :column}}
       (for [patient patients]
-        ^{:key (:id patient)}
+        ^{:key (:patient/id patient)}
         [patient-selector patient])]]))
 
 (defn dose-chart []
   (let [date-range        (get-date-range @app-db)
         selected-patients (get-selected-patients @app-db)]
     [chart
-     (for [{:keys [id color dose-history]} selected-patients]
+     (for [{:patient/keys [id color dose-history]} selected-patients]
        ^{:key id}
        [chart-line {:style   {:data {:stroke       color
                                      :stroke-width 5}}
@@ -115,4 +157,32 @@
    [patient-selectors]])
 
 (defn init []
+  (st/instrument)
   (.registerRootComponent expo (r/reactify-component app-root)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(comment
+  (gen/generate (s/gen ::patient))
+  (gen/generate (s/gen :db/patients))
+  )
