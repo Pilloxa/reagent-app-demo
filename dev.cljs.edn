@@ -1,2 +1,0 @@
-^{:watch-dirs ["src"]}
-{:main reagent-app-demo.core}

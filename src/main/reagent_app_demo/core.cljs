@@ -1,5 +1,9 @@
 (ns reagent-app-demo.core
-  (:require [reagent.core :as r]
+  (:require ["react-native" :as rn]
+            #_["react" :as react]
+            ["victory-native" :as victory]
+            [reagent.core :as r]
+            [shadow.expo :as shadow-expo] 
             [cljs.spec.alpha :as s]
             [orchestra-cljs.spec.test :as st]
             [clojure.test.check.generators]
@@ -9,12 +13,9 @@
 ;; imports
 ;;
 
-(def expo (js/require "expo"))
-(def react-native (js/require "react-native"))
-(def victory (js/require "victory-native"))
-(def view (r/adapt-react-class (.-View react-native)))
-(def text (r/adapt-react-class (.-Text react-native)))
-(def touchable-opacity (r/adapt-react-class (.-TouchableOpacity react-native)))
+(def view (r/adapt-react-class (.-View rn)))
+(def text (r/adapt-react-class (.-Text rn)))
+(def touchable-opacity (r/adapt-react-class (.-TouchableOpacity rn)))
 (def chart (r/adapt-react-class (.-VictoryChart victory)))
 (def chart-line (r/adapt-react-class (.-VictoryLine victory)))
 
@@ -44,15 +45,15 @@
 
 (defonce app-db
   (r/atom
-    #:db {:date-range ["2019-06-01" "2019-06-02" "2019-06-03" "2019-06-04"]
-          :patients   [#:patient {:id           :patient-1
-                                  :dose-history [(rand-int 100) (rand-int 100) (rand-int 100) (rand-int 100)]
-                                  :color        "rgb(255,0,0)"
-                                  :selected?    true}
-                       #:patient {:id           :patient-2
-                                  :dose-history [92 93 95 95]
-                                  :color        "rgb(0,0,255)"
-                                  :selected?    true}]}))
+   #:db {:date-range ["2019-06-01" "2019-06-02" "2019-06-03" "2019-06-04"]
+         :patients   [#:patient {:id           :patient-1
+                                 :dose-history [(rand-int 100) (rand-int 100) (rand-int 100) (rand-int 100)]
+                                 :color        "rgb(255,0,0)"
+                                 :selected?    true}
+                      #:patient {:id           :patient-2
+                                 :dose-history [92 93 95 95]
+                                 :color        "rgb(0,0,255)"
+                                 :selected?    true}]}))
 
 ;;
 ;; db fns
@@ -65,8 +66,8 @@
   (:db/patients db))
 
 (s/fdef get-patients
-        :args (s/cat :db ::app-db)
-        :ret (s/every ::patient))
+  :args (s/cat :db ::app-db)
+  :ret (s/every ::patient))
 
 (defn get-selected-patients [db]
   (->> db
@@ -74,8 +75,8 @@
        (filter :patient/selected?)))
 
 (s/fdef get-selected-patients
-        :args (s/cat :db ::app-db)
-        :ret (s/every ::patient))
+  :args (s/cat :db ::app-db)
+  :ret (s/every ::patient))
 
 (defn toggle-select-patient [patient-id]
   (swap! app-db update :db/patients
@@ -87,8 +88,8 @@
                  patients))))
 
 (s/fdef toggle-select-patient
-        :args (s/cat :patient-id :patient/id)
-        :ret ::app-db)
+  :args (s/cat :patient-id :patient/id)
+  :ret ::app-db)
 
 ;;
 ;; components
@@ -156,9 +157,14 @@
    [dose-chart]
    [patient-selectors]])
 
+(defn start
+  {:dev/after-load true}
+  []
+  (shadow-expo/render-root (r/as-element [app-root])))
+
 (defn init []
   (st/instrument)
-  (.registerRootComponent expo (r/reactify-component app-root)))
+  (start))
 
 
 
