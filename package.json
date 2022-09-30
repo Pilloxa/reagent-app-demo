@@ -11,6 +11,6 @@
     "react-dom": "16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-35.0.0.tar.gz",
     "react-native-svg": "~9.9.2",
-    "victory-native": "^34.1.0"
+    "victory-native": "^36.6.8"
   }
 }
